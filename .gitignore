@@ -1,0 +1,26 @@
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# Next.js
+.next
+
+# Logs
+*.log
+
+# Cache
+cache/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules
+
+# Coverage
+coverage
+
+# Vercel
+.vercel
