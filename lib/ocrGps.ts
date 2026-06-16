@@ -1,9 +1,13 @@
-import Tesseract from "tesseract.js";
+import Tesseract
+from "tesseract.js";
 
-export async function extractGpsFromImage(
+export async function
+extractGpsFromImage(
   filePath: string
 ) {
+
   try {
+
     const result =
       await Tesseract.recognize(
         filePath,
@@ -13,25 +17,37 @@ export async function extractGpsFromImage(
     const text =
       result.data.text;
 
-    console.log(
-      "OCR TEXT:",
-      text
-    );
+    console.log(text);
 
-    let latitude: number | undefined;
-    let longitude: number | undefined;
+    let latitude;
+    let longitude;
 
-    const match =
-      text.match(
-        /(-?\d+\.\d+)[^\d-]+(-?\d+\.\d+)/
-      );
+    const patterns = [
 
-    if (match) {
-      latitude =
-        Number(match[1]);
+      /Lat(?:itude)?[:\s]*([+-]?\d+\.\d+).*?Lon(?:gitude)?[:\s]*([+-]?\d+\.\d+)/is,
 
-      longitude =
-        Number(match[2]);
+      /([+-]?\d{1,2}\.\d{5,})[^\d]+([+-]?\d{1,3}\.\d{5,})/,
+
+    ];
+
+    for (
+      const pattern
+      of patterns
+    ) {
+
+      const match =
+        text.match(pattern);
+
+      if (match) {
+
+        latitude =
+          Number(match[1]);
+
+        longitude =
+          Number(match[2]);
+
+        break;
+      }
     }
 
     return {
@@ -39,7 +55,9 @@ export async function extractGpsFromImage(
       longitude,
       rawText: text,
     };
+
   } catch (error) {
+
     console.error(
       "OCR failed",
       error
