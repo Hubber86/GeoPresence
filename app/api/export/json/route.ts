@@ -1,19 +1,26 @@
 import { NextResponse } from "next/server";
+
 import { getAttendanceReport } from "@/lib/report";
+import { createJson } from "@/lib/exports";
 
 export async function GET() {
   try {
-    const report = await getAttendanceReport();
+    const report =
+      await getAttendanceReport();
 
     return new NextResponse(
-      JSON.stringify(report, null, 2),
+      createJson(report),
       {
         status: 200,
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type":
+            "application/json",
+
           "Content-Disposition":
             'attachment; filename="attendance-report.json"',
-          "Cache-Control": "no-store",
+
+          "Cache-Control":
+            "no-store",
         },
       }
     );
