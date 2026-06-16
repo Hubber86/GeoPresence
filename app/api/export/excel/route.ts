@@ -1,37 +1,44 @@
-import XLSX from "xlsx";
+import { NextResponse } from "next/server";
+
+import { getAttendanceReport } from "@/lib/report";
+import { createExcel } from "@/lib/exports";
 
 export async function GET() {
+  try {
+    const report =
+      await getAttendanceReport();
 
-  const report =
-    await getAttendance();
+    const buffer =
+      createExcel(report);
 
-  const wb =
-    XLSX.utils.book_new();
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 
-  const ws =
-    XLSX.utils.json_to_sheet(
-      report
+        "Content-Disposition":
+          'attachment; filename="attendance-report.xlsx"',
+
+        "Cache-Control":
+          "no-store",
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Excel export failed:",
+      error
     );
 
-  XLSX.utils.book_append_sheet(
-    wb,
-    ws,
-    "Attendance"
-  );
-
-  const buffer =
-    XLSX.write(wb, {
-      type: "buffer",
-      bookType: "xlsx"
-    });
-
-  return new Response(buffer, {
-    headers: {
-      "Content-Type":
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-
-      "Content-Disposition":
-      "attachment; filename=attendance.xlsx"
-    }
-  });
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Failed to generate Excel report",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }
