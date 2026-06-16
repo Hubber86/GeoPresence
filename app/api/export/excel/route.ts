@@ -8,22 +8,25 @@ export async function GET() {
     const report =
       await getAttendanceReport();
 
-    const buffer =
+    const excelData =
       createExcel(report);
 
-    return new NextResponse(buffer, {
-      status: 200,
-      headers: {
-        "Content-Type":
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    return new Response(
+      excelData.buffer,
+      {
+        status: 200,
+        headers: {
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 
-        "Content-Disposition":
-          'attachment; filename="attendance-report.xlsx"',
+          "Content-Disposition":
+            'attachment; filename="attendance-report.xlsx"',
 
-        "Cache-Control":
-          "no-store",
-      },
-    });
+          "Cache-Control":
+            "no-store",
+        },
+      }
+    );
   } catch (error) {
     console.error(
       "Excel export failed:",
