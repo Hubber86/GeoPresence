@@ -1,34 +1,43 @@
 export interface PhotoMetadata {
-  fileName: string
+  fileName: string;
 
-  latitude?: number
-  longitude?: number
+  /**
+   * Unix timestamp (milliseconds)
+   * Used for sorting and duration calculations
+   */
+  timestamp: number;
 
-  dateTaken: string
-  timeTaken: string
+  latitude?: number;
+  longitude?: number;
 
-  address?: string
-  city?: string
-  district?: string
-  state?: string
-  country?: string
-  postalCode?: string
+  dateTaken: string;
+  timeTaken: string;
 
-  camera?: string
+  address?: string;
+
+  city?: string;
+  district?: string;
+  state?: string;
+  country?: string;
+
+  postalCode?: string;
+
+  camera?: string;
 }
 
 export interface AttendanceRecord {
-  date: string
+  date: string;
 
-  checkIn: string
-  checkOut: string
+  checkIn: string;
+  checkOut: string;
 
-  duration: string
+  duration: string;
 
-  checkInLocation: string
-  checkOutLocation: string
+  checkInLocation: string;
+  checkOutLocation: string;
 
-  city: string
-  state: string
-  postalCode: string
+  city: string;
+  state: string;
+
+  postalCode: string;
 }
