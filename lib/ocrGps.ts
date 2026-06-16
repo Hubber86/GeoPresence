@@ -1,40 +1,50 @@
 import Tesseract from "tesseract.js";
 
 export async function extractGpsFromImage(
-  imagePath: string
+  filePath: string
 ) {
   try {
     const result =
       await Tesseract.recognize(
-        imagePath,
+        filePath,
         "eng"
       );
 
     const text =
       result.data.text;
 
-    const latMatch =
+    console.log(
+      "OCR TEXT:",
+      text
+    );
+
+    let latitude: number | undefined;
+    let longitude: number | undefined;
+
+    const match =
       text.match(
-        /Lat\s*([0-9]+\.[0-9]+)/
+        /(-?\d+\.\d+)[^\d-]+(-?\d+\.\d+)/
       );
 
-    const lonMatch =
-      text.match(
-        /Long\s*([0-9]+\.[0-9]+)/
-      );
+    if (match) {
+      latitude =
+        Number(match[1]);
+
+      longitude =
+        Number(match[2]);
+    }
 
     return {
-      latitude: latMatch
-        ? Number(latMatch[1])
-        : undefined,
-
-      longitude: lonMatch
-        ? Number(lonMatch[1])
-        : undefined,
-
-      rawText: text
+      latitude,
+      longitude,
+      rawText: text,
     };
-  } catch {
+  } catch (error) {
+    console.error(
+      "OCR failed",
+      error
+    );
+
     return {};
   }
 }
