@@ -18,8 +18,11 @@ export async function GET() {
 
   for (const file of files) {
 
-    const exif =
-      await extractExif(file.path);
+  const exif =
+    await extractExif(
+      file.path,
+      file.name
+    );
 
     let geo = {};
 
