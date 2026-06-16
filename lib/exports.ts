@@ -19,7 +19,7 @@ export function createJson(
 
 export function createExcel(
   data: unknown[]
-): Buffer {
+): Uint8Array {
   const workbook =
     XLSX.utils.book_new();
 
@@ -29,11 +29,10 @@ export function createExcel(
   XLSX.utils.book_append_sheet(
     workbook,
     worksheet,
-    "Attendance"
-  );
+    "Attendance");
 
   return XLSX.write(workbook, {
-    type: "buffer",
+    type: "array",
     bookType: "xlsx",
   });
 }
