@@ -1,72 +1,113 @@
-import { format } from "date-fns";
+import { differenceInMinutes } from "date-fns";
+
+import {
+  AttendanceRecord,
+  PhotoMetadata,
+} from "@/lib/types";
 
 export function buildAttendance(
-  photos: any[]
-) {
-  const grouped =
-    Object.groupBy(
-      photos,
-      (p) => p.dateTaken
-    );
+  photos: PhotoMetadata[]
+): AttendanceRecord[] {
+  const grouped = photos.reduce(
+    (
+      acc,
+      photo
+    ) => {
+      const key =
+        photo.dateTaken ??
+        "Unknown";
 
-  const records = [];
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+
+      acc[key].push(photo);
+
+      return acc;
+    },
+    {} as Record<
+      string,
+      PhotoMetadata[]
+    >
+  );
+
+  const records: AttendanceRecord[] =
+    [];
 
   for (const date in grouped) {
     const items =
-      grouped[date]!.sort(
+      grouped[date].sort(
         (a, b) =>
-          a.timestamp - b.timestamp
+          (a.timestamp ?? 0) -
+          (b.timestamp ?? 0)
       );
 
-    const first = items[0];
-    const last =
-      items[items.length - 1];
+    if (!items.length) {
+      continue;
+    }
 
-    const durationMs =
-      last.timestamp -
-      first.timestamp;
+    const first = items[0];
+
+    const last =
+      items[
+        items.length - 1
+      ];
+
+    const durationMinutes =
+      differenceInMinutes(
+        new Date(
+          last.timestamp ?? 0
+        ),
+        new Date(
+          first.timestamp ?? 0
+        )
+      );
 
     const hours =
       Math.floor(
-        durationMs /
-          (1000 * 60 * 60)
+        durationMinutes / 60
       );
 
-    const mins =
-      Math.floor(
-        (durationMs %
-          (1000 * 60 * 60)) /
-          (1000 * 60)
-      );
+    const minutes =
+      durationMinutes % 60;
 
     records.push({
       date,
 
       checkIn:
-        first.timeTaken,
+        first.timeTaken ??
+        "-",
 
       checkOut:
-        last.timeTaken,
+        last.timeTaken ??
+        "-",
 
       duration:
-        `${hours}h ${mins}m`,
+        `${hours}h ${minutes}m`,
 
       checkInLocation:
-        first.address,
+        first.address ??
+        "-",
 
       checkOutLocation:
-        last.address,
+        last.address ??
+        "-",
 
       city:
-        first.city,
+        first.city ?? "-",
 
       state:
-        first.state,
+        first.state ?? "-",
 
       postalCode:
-        first.postalCode
+        first.postalCode ??
+        "-",
     });
   }
 
-  return records;
+  return records.sort(
+    (a, b) =>
+      new Date(a.date).getTime() -
+      new Date(b.date).getTime()
+  );
 }
