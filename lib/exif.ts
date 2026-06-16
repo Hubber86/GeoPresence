@@ -2,22 +2,29 @@ import * as exifr from "exifr";
 
 import { format } from "date-fns";
 
-import { PhotoMetadata } from "./types";
+import type {
+  PhotoMetadata,
+} from "./types";
 
 export async function extractExif(
   filePath: string,
   fileName: string
 ): Promise<PhotoMetadata> {
+
   const exif = await exifr.parse(
     filePath,
-    {
-      gps: true,
-    }
+    true
+  );
+
+  console.log(
+    `EXIF for ${fileName}:`,
+    JSON.stringify(exif, null, 2)
   );
 
   const date =
     exif?.DateTimeOriginal ||
     exif?.CreateDate ||
+    exif?.ModifyDate ||
     new Date();
 
   return {
@@ -51,15 +58,10 @@ export async function extractExif(
       .trim(),
 
     address: "",
-
     city: "",
-
     district: "",
-
     state: "",
-
     country: "",
-
     postalCode: "",
   };
 }
