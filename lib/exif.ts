@@ -2,8 +2,8 @@ import * as exifr from "exifr";
 
 import { format } from "date-fns";
 
-import { extractGpsFromImage }
-  from "./ocrGps";
+// import { extractGpsFromImage }
+//   from "./ocrGps";
 
 import type {
   PhotoMetadata,
@@ -30,17 +30,17 @@ export async function extractExif(
     !latitude ||
     !longitude
   ) {
-    const ocr =
-      await extractGpsFromImage(
-        filePath
-      );
+  //   const ocr =
+  //     await extractGpsFromImage(
+  //       filePath
+  //     );
 
-    latitude =
-      ocr.latitude;
+  //   latitude =
+  //     ocr.latitude;
 
-    longitude =
-      ocr.longitude;
-  }
+  //   longitude =
+  //     ocr.longitude;
+  // }
 
   const date =
     exif?.DateTimeOriginal ||
