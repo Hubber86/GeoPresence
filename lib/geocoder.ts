@@ -3,69 +3,51 @@ export async function reverseGeocode(
   lon: number
 ) {
   try {
-
-    const baseUrl =
-      process.env
-        .NOMINATIM_BASE_URL ||
-      "https://nominatim.openstreetmap.org";
-
     const url =
-      `${baseUrl}/reverse` +
+      `https://nominatim.openstreetmap.org/reverse` +
       `?format=jsonv2` +
       `&lat=${lat}` +
       `&lon=${lon}`;
 
-    const response =
-      await fetch(url, {
-        headers: {
-          "User-Agent":
-            "GeoPresence/1.0",
-        },
-        cache: "no-store",
-      });
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "GeoPresence/1.0",
+      },
+    });
 
-    if (!response.ok) {
+    if (!res.ok) {
       throw new Error(
-        `Geocoder failed: ${response.status}`
+        `Geocoder error ${res.status}`
       );
     }
 
-    const data =
-      await response.json();
+    const data = await res.json();
 
     return {
       address:
-        data?.display_name ?? "",
+        data.display_name ?? "",
 
       city:
-        data?.address?.city ||
-        data?.address?.town ||
-        data?.address?.village ||
+        data.address?.city ||
+        data.address?.town ||
+        data.address?.village ||
         "",
 
       district:
-        data?.address?.county ||
-        "",
+        data.address?.county || "",
 
       state:
-        data?.address?.state ||
-        "",
+        data.address?.state || "",
 
       country:
-        data?.address?.country ||
-        "",
+        data.address?.country || "",
 
       postalCode:
-        data?.address?.postcode ||
-        "",
+        data.address?.postcode || "",
     };
-
   } catch (error) {
-
-    console.error(
-      "Reverse geocode error:",
-      error
-    );
+    console.error(error);
 
     return {
       address: "",
