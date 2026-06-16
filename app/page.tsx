@@ -54,11 +54,11 @@ export default async function HomePage() {
         {/* Export Section */}
         <ExportButtons />
 
-        /* {/* Attendance Report */}
+        {/* {/* Attendance Report */}
         <AttendanceTable data={report} />
 
         {/* Photo Metadata Gallery */}
-        <PhotoViewer photos={photos} /> */
+        <PhotoViewer photos={photos} /> */}
         
         <DashboardClient
           report={report}
