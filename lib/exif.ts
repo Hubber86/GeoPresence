@@ -1,78 +1,47 @@
 import * as exifr from "exifr";
-
 import { format } from "date-fns";
 
-// import { extractGpsFromImage }
-//   from "./ocrGps";
+import type { PhotoMetadata } from "./types";
 
-import type {
-  PhotoMetadata,
-} from "./types";
+// import { extractGpsFromImage } from "./ocrGps";
 
 export async function extractExif(
   filePath: string,
   fileName: string
 ): Promise<PhotoMetadata> {
+  const exif = await exifr.parse(filePath, true);
 
-  const exif =
-    await exifr.parse(
-      filePath,
-      true
-    );
+  let latitude = exif?.latitude;
+  let longitude = exif?.longitude;
 
-  let latitude =
-    exif?.latitude;
+  if (latitude == null || longitude == null) {
+    // const ocr = await extractGpsFromImage(filePath);
 
-  let longitude =
-    exif?.longitude;
+    // latitude = ocr.latitude;
+    // longitude = ocr.longitude;
+  }
 
-  if (
-    !latitude ||
-    !longitude
-  ) {
-  //   const ocr =
-  //     await extractGpsFromImage(
-  //       filePath
-  //     );
-
-  //   latitude =
-  //     ocr.latitude;
-
-  //   longitude =
-  //     ocr.longitude;
-  // }
-
-  const date =
+  const dateValue =
     exif?.DateTimeOriginal ||
     exif?.CreateDate ||
     exif?.ModifyDate ||
     new Date();
 
+  const date = new Date(dateValue);
+
   return {
     fileName,
 
-    timestamp:
-      new Date(date).getTime(),
+    timestamp: date.getTime(),
 
-    dateTaken:
-      format(
-        date,
-        "yyyy-MM-dd"
-      ),
+    dateTaken: format(date, "yyyy-MM-dd"),
 
-    timeTaken:
-      format(
-        date,
-        "HH:mm:ss"
-      ),
+    timeTaken: format(date, "HH:mm:ss"),
 
     latitude,
     longitude,
 
-    camera: [
-      exif?.Make,
-      exif?.Model,
-    ]
+    camera: [exif?.Make, exif?.Model]
       .filter(Boolean)
       .join(" ")
       .trim(),
