@@ -1,14 +1,18 @@
-import { getPhotos } from "./photoScanner";
-import { extractExif } from "./exif";
-import { reverseGeocode } from "./geocoder";
+import { getPhotos } from "@/lib/photoScanner";
+import { extractExif } from "@/lib/exif";
+import { reverseGeocode } from "@/lib/geocoder";
 
-export async function getPhotoMetadata() {
+import type { PhotoMetadata } from "@/lib/types";
+
+export async function getPhotoMetadata(): Promise<PhotoMetadata[]> {
   const files = getPhotos();
 
-  const results = await Promise.all(
+  return Promise.all(
     files.map(async (file) => {
-      const exif =
-        await extractExif(file.path);
+      const exif = await extractExif(
+        file.path,
+        file.name
+      );
 
       let geo = {};
 
@@ -23,12 +27,9 @@ export async function getPhotoMetadata() {
       }
 
       return {
-        fileName: file.name,
         ...exif,
         ...geo,
       };
     })
   );
-
-  return results;
 }
