@@ -11,8 +11,17 @@ export async function GET() {
     const excelData =
       createExcel(report);
 
+    const arrayBuffer =
+      new ArrayBuffer(
+        excelData.byteLength
+      );
+
+    new Uint8Array(
+      arrayBuffer
+    ).set(excelData);
+
     return new Response(
-      excelData.buffer,
+      arrayBuffer,
       {
         status: 200,
         headers: {
