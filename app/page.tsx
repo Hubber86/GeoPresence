@@ -9,63 +9,95 @@ import { getAttendanceReport } from "@/lib/report";
 import { getPhotoMetadata } from "@/lib/photos";
 
 export default async function HomePage() {
-  const [report, photos] = await Promise.all([
-    getAttendanceReport(),
-    getPhotoMetadata(),
-  ]);
+  try {
+    const [report, photos] = await Promise.all([
+      getAttendanceReport(),
+      getPhotoMetadata(),
+    ]);
 
-  const totalPhotos = photos.length;
-  const totalDays = report.length;
-
-  const sortedDates = report
-    .map((item) => new Date(item.date))
-    .sort(
-      (a, b) =>
-        a.getTime() - b.getTime()
+    console.log(
+      "REPORT:",
+      report.length
     );
 
-  const earliestDate =
-    sortedDates.length > 0
-      ? sortedDates[0].toLocaleDateString("en-IN")
-      : "-";
+    console.log(
+      "PHOTOS:",
+      photos.length
+    );
 
-  const latestDate =
-    sortedDates.length > 0
-      ? sortedDates[
-          sortedDates.length - 1
-        ].toLocaleDateString("en-IN")
-      : "-";
+    const totalPhotos = photos.length;
+    const totalDays = report.length;
 
-  return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="container mx-auto max-w-7xl px-6 py-8 space-y-8">
+    const sortedDates = report
+      .map((item) => new Date(item.date))
+      .sort(
+        (a, b) =>
+          a.getTime() - b.getTime()
+      );
 
-        {/* Dashboard Header */}
-        <DashboardHeader />
+    const earliestDate =
+      sortedDates.length > 0
+        ? sortedDates[0].toLocaleDateString(
+            "en-IN"
+          )
+        : "-";
 
-        {/* Summary Statistics */}
-        <SummaryCards
-          totalPhotos={totalPhotos}
-          totalDays={totalDays}
-          earliestDate={earliestDate}
-          latestDate={latestDate}
-        />
+    const latestDate =
+      sortedDates.length > 0
+        ? sortedDates[
+            sortedDates.length - 1
+          ].toLocaleDateString(
+            "en-IN"
+          )
+        : "-";
 
-        {/* Export Section */}
-        <ExportButtons />
+    return (
+      <main className="min-h-screen bg-slate-50">
+        <div className="container mx-auto max-w-7xl px-6 py-8 space-y-8">
+          {/* Dashboard Header */}
+          <DashboardHeader />
 
-         {/* Attendance Report */}
-        {/* <AttendanceTable data={report} /> */}
+          {/* Summary Statistics */}
+          <SummaryCards
+            totalPhotos={totalPhotos}
+            totalDays={totalDays}
+            earliestDate={earliestDate}
+            latestDate={latestDate}
+          />
 
-        {/* Photo Metadata Gallery */}
-        {/* <PhotoViewer photos={photos} /> */}
-        
-        <DashboardClient
-          report={report}
-          photos={photos}
-        />        
+          {/* Export Section */}
+          <ExportButtons />
 
-      </div>
-    </main>
-  );
+          {/* Attendance Report */}
+          {/* <AttendanceTable data={report} /> */}
+
+          {/* Photo Metadata Gallery */}
+          {/* <PhotoViewer photos={photos} /> */}
+
+          <DashboardClient
+            report={report}
+            photos={photos}
+          />
+        </div>
+      </main>
+    );
+  } catch (error) {
+    console.error(
+      "PAGE ERROR:",
+      error
+    );
+
+    return (
+      <main className="p-8">
+        <h1>
+          Dashboard Error
+        </h1>
+        <pre>
+          {error instanceof Error
+            ? error.message
+            : String(error)}
+        </pre>
+      </main>
+    );
+  }
 }
