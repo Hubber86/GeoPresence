@@ -1,19 +1,10 @@
 export const runtime = "nodejs";
 
-import { NextResponse }
-from "next/server";
+import { NextResponse } from "next/server";
 
-import { getPhotos }
-from "@/lib/photoScanner";
-
-import { extractExif }
-from "@/lib/exif";
-
-import { extractGpsFromImage }
-from "@/lib/ocrGps";
-
-import { reverseGeocode }
-from "@/lib/geocoder";
+import { getPhotos } from "@/lib/photoScanner";
+import { extractExif } from "@/lib/exif";
+import { reverseGeocode } from "@/lib/geocoder";
 
 export async function GET() {
 
@@ -30,52 +21,49 @@ export async function GET() {
         file.name
       );
 
-    let latitude =
-      exif.latitude;
+    console.log(
+      "PHOTO:",
+      file.name
+    );
 
-    let longitude =
-      exif.longitude;
+    console.log(
+      "LAT:",
+      exif.latitude
+    );
 
-    if (
-      latitude == null ||
-      longitude == null
-    ) {
-
-      const ocr =
-        await extractGpsFromImage(
-          file.path
-        );
-
-      latitude =
-        ocr.latitude;
-
-      longitude =
-        ocr.longitude;
-    }
+    console.log(
+      "LON:",
+      exif.longitude
+    );
 
     let geo = {};
 
     if (
-      latitude != null &&
-      longitude != null
+      exif.latitude != null &&
+      exif.longitude != null
     ) {
 
       geo =
         await reverseGeocode(
-          latitude,
-          longitude
+          exif.latitude,
+          exif.longitude
         );
+
+      console.log(
+        "GEO:",
+        geo
+      );
+
+    } else {
+
+      console.log(
+        "GPS NOT FOUND"
+      );
     }
 
     results.push({
-
       ...exif,
-
-      latitude,
-      longitude,
-
       ...geo,
-
     });
   }
 
