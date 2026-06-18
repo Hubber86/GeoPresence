@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import SummaryCards from "@/components/dashboard/SummaryCards";
 // import AttendanceTable from "@/components/dashboard/AttendanceTable";
