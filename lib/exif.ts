@@ -1,12 +1,7 @@
 import * as exifr from "exifr";
 import { format } from "date-fns";
 
-import { extractGpsFromImage }
-  from "./ocrGps";
-
-import type {
-  PhotoMetadata
-} from "./types";
+import type { PhotoMetadata } from "./types";
 
 export async function extractExif(
   filePath: string,
@@ -18,29 +13,6 @@ export async function extractExif(
       filePath,
       true
     );
-
-  let latitude =
-    exif?.latitude;
-
-  let longitude =
-    exif?.longitude;
-
-  if (
-    latitude == null ||
-    longitude == null
-  ) {
-
-    const ocr =
-      await extractGpsFromImage(
-        filePath
-      );
-
-    latitude =
-      ocr.latitude;
-
-    longitude =
-      ocr.longitude;
-  }
 
   const dateValue =
     exif?.DateTimeOriginal ||
@@ -58,19 +30,16 @@ export async function extractExif(
       date.getTime(),
 
     dateTaken:
-      format(
-        date,
-        "yyyy-MM-dd"
-      ),
+      format(date, "yyyy-MM-dd"),
 
     timeTaken:
-      format(
-        date,
-        "HH:mm:ss"
-      ),
+      format(date, "HH:mm:ss"),
 
-    latitude,
-    longitude,
+    latitude:
+      exif?.latitude,
+
+    longitude:
+      exif?.longitude,
 
     camera: [
       exif?.Make,
