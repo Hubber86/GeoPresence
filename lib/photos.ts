@@ -8,36 +8,36 @@ export async function getPhotoMetadata(): Promise<PhotoMetadata[]> {
 
   const files = getPhotos();
 
-  const results = await Promise.all(
+  const results: PhotoMetadata[] = [];
 
-    files.map(async (file) => {
+  for (const file of files) {
 
-      const exif =
-        await extractExif(
-          file.path,
-          file.name
+    const exif =
+      await extractExif(
+        file.path,
+        file.name
+      );
+
+    let geo = {};
+
+    if (
+      exif.latitude != null &&
+      exif.longitude != null &&
+      !exif.city &&
+      !exif.state
+    ) {
+      geo =
+        await reverseGeocode(
+          exif.latitude,
+          exif.longitude
         );
+    }
 
-      let geo = {};
-
-if (
-  exif.latitude != null &&
-  exif.longitude != null &&
-  !exif.city &&
-  !exif.state
-) {
-  geo = await reverseGeocode(
-    exif.latitude,
-    exif.longitude
-  );
-}
-
-      return {
-        ...exif,
-        ...geo,
-      };
-    })
-  );
+    results.push({
+      ...exif,
+      ...geo,
+    });
+  }
 
   return results;
 }
