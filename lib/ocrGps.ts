@@ -14,30 +14,38 @@ export interface OcrGpsResult {
 export async function extractGpsFromImage(
   filePath: string
 ): Promise<OcrGpsResult> {
-
   try {
 
     console.log(
-      `Starting OCR: ${filePath}`
+      `OCR Processing: ${filePath}`
     );
 
-    const result =
-      await Tesseract.recognize(
-        filePath,
-        "eng"
-      );
-
-    const text =
-      result.data.text || "";
+    const {
+      data: { text }
+    } = await Tesseract.recognize(
+      filePath,
+      "eng",
+      {
+        logger: (m) => {
+          if (m.status === "recognizing text") {
+            console.log(
+              `OCR ${Math.round(
+                m.progress * 100
+              )}%`
+            );
+          }
+        }
+      }
+    );
 
     console.log(
-      "===== OCR TEXT START ====="
+      "===== OCR OUTPUT START ====="
     );
 
     console.log(text);
 
     console.log(
-      "===== OCR TEXT END ====="
+      "===== OCR OUTPUT END ====="
     );
 
     let latitude: number | undefined;
@@ -49,14 +57,17 @@ export async function extractGpsFromImage(
 
     const coordinatePatterns = [
 
-      // Lat 18.47105 Long 73.792701
-      /Lat(?:itude)?\s*[:\-]?\s*([+-]?\d+\.\d+).*?Long(?:itude)?\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
+      // Latitude:18.47105 Longitude:73.792701
+      /Latitude\s*[:\-]?\s*([+-]?\d+\.\d+).*?Longitude\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
 
-      // 18.47105 73.792701
-      /([+-]?\d{1,2}\.\d{4,})[^\d]+([+-]?\d{1,3}\.\d{4,})/is,
+      // Lat 18.47105 Long 73.792701
+      /Lat\s*[:\-]?\s*([+-]?\d+\.\d+).*?Long\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
 
       // Lat18.47105Long73.792701
       /Lat([+-]?\d+\.\d+)Long([+-]?\d+\.\d+)/is,
+
+      // Standalone coordinates
+      /([+-]?\d{1,2}\.\d{4,})[^\d]+([+-]?\d{1,3}\.\d{4,})/is,
     ];
 
     for (const pattern of coordinatePatterns) {
@@ -72,11 +83,14 @@ export async function extractGpsFromImage(
         longitude =
           Number(match[2]);
 
+        console.log(
+          `GPS Found: ${latitude}, ${longitude}`
+        );
+
         break;
       }
     }
 
-    // PIN Code (India)
     const pinMatch =
       text.match(/\b\d{6}\b/);
 
@@ -85,32 +99,30 @@ export async function extractGpsFromImage(
         pinMatch[0];
     }
 
-    // GPS Map Camera format:
-    // Pune, Maharashtra, India
-    const locationMatch =
+    const indiaLocationMatch =
       text.match(
         /([A-Za-z ]+),\s*([A-Za-z ]+),\s*India/i
       );
 
-    if (locationMatch) {
+    if (indiaLocationMatch) {
 
       city =
-        locationMatch[1]
+        indiaLocationMatch[1]
           .trim();
 
       state =
-        locationMatch[2]
+        indiaLocationMatch[2]
           .trim();
     }
 
-    // Fallback city/state extraction
     if (!city || !state) {
 
       const lines =
         text
           .split("\n")
           .map(
-            (line) => line.trim()
+            (line) =>
+              line.trim()
           )
           .filter(Boolean);
 
@@ -118,7 +130,7 @@ export async function extractGpsFromImage(
 
         const match =
           line.match(
-            /([A-Za-z ]+),\s*([A-Za-z ]+)/
+            /^([A-Za-z ]+),\s*([A-Za-z ]+)$/
           );
 
         if (match) {
@@ -136,14 +148,6 @@ export async function extractGpsFromImage(
       }
     }
 
-    console.log({
-      latitude,
-      longitude,
-      city,
-      state,
-      postalCode,
-    });
-
     return {
       latitude,
       longitude,
@@ -156,10 +160,14 @@ export async function extractGpsFromImage(
   } catch (error) {
 
     console.error(
-      "OCR failed:",
+      "OCR Extraction Failed:",
       error
     );
 
-    return {};
+    return {
+      city: "",
+      state: "",
+      postalCode: "",
+    };
   }
 }
