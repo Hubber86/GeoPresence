@@ -23,7 +23,7 @@ export async function extractExif(
     let longitude: number | undefined = exif?.longitude;
 
     let city = "";
-    let district = "";
+    // let district = "";
     let state = "";
     let country = "";
     let postalCode = "";
@@ -57,8 +57,8 @@ export async function extractExif(
         city =
           ocr?.city ?? "";
 
-        district =
-          ocr?.district ?? "";
+        // district =
+        //   ocr?.district ?? "";
 
         state =
           ocr?.state ?? "";
@@ -132,7 +132,7 @@ export async function extractExif(
 
       city,
 
-      district,
+      // district,
 
       state,
 
@@ -173,7 +173,7 @@ export async function extractExif(
 
       address: "",
       city: "",
-      district: "",
+      // district: "",
       state: "",
       country: "",
       postalCode: "",
