@@ -19,15 +19,18 @@ export async function extractExif(
       iptc: false,
     });
 
-    let latitude: number | undefined =
-      exif?.latitude;
+    let latitude: number | undefined = exif?.latitude;
+    let longitude: number | undefined = exif?.longitude;
 
-    let longitude: number | undefined =
-      exif?.longitude;
+    let city = "";
+    let district = "";
+    let state = "";
+    let country = "";
+    let postalCode = "";
+    let address = "";
 
     /*
-     * Fallback to OCR only if GPS
-     * not available in EXIF
+     * OCR fallback when EXIF GPS missing
      */
     if (
       latitude == null ||
@@ -37,24 +40,54 @@ export async function extractExif(
         `[OCR FALLBACK] ${fileName}`
       );
 
-      const ocr =
-        await extractGpsFromImage(
-          filePath
+      try {
+        const ocr =
+          await extractGpsFromImage(
+            filePath
+          );
+
+        latitude =
+          ocr?.latitude ??
+          latitude;
+
+        longitude =
+          ocr?.longitude ??
+          longitude;
+
+        city =
+          ocr?.city ?? "";
+
+        district =
+          ocr?.district ?? "";
+
+        state =
+          ocr?.state ?? "";
+
+        country =
+          ocr?.country ?? "";
+
+        postalCode =
+          ocr?.postalCode ?? "";
+
+        address =
+          ocr?.address ?? "";
+
+        console.log(
+          `[OCR RESULT] ${fileName}`,
+          {
+            latitude,
+            longitude,
+            city,
+            state,
+            postalCode,
+          }
         );
-
-      latitude =
-        ocr.latitude;
-
-      longitude =
-        ocr.longitude;
-
-      console.log(
-        `[OCR RESULT] ${fileName}`,
-        {
-          latitude,
-          longitude,
-        }
-      );
+      } catch (ocrError) {
+        console.error(
+          `[OCR ERROR] ${fileName}`,
+          ocrError
+        );
+      }
     }
 
     const dateValue =
@@ -95,12 +128,17 @@ export async function extractExif(
         .join(" ")
         .trim(),
 
-      address: "",
-      city: "",
-      district: "",
-      state: "",
-      country: "",
-      postalCode: "",
+      address,
+
+      city,
+
+      district,
+
+      state,
+
+      country,
+
+      postalCode,
     };
   } catch (error) {
     console.error(
@@ -108,21 +146,23 @@ export async function extractExif(
       error
     );
 
+    const now = new Date();
+
     return {
       fileName,
 
       timestamp:
-        Date.now(),
+        now.getTime(),
 
       dateTaken:
         format(
-          new Date(),
+          now,
           "yyyy-MM-dd"
         ),
 
       timeTaken:
         format(
-          new Date(),
+          now,
           "HH:mm:ss"
         ),
 
