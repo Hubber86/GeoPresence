@@ -5,25 +5,30 @@ import { reverseGeocode } from "@/lib/geocoder";
 import type { PhotoMetadata } from "@/lib/types";
 
 export async function getPhotoMetadata(): Promise<PhotoMetadata[]> {
+
   const files = getPhotos();
 
-  return Promise.all(
+  const results = await Promise.all(
+
     files.map(async (file) => {
-      const exif = await extractExif(
-        file.path,
-        file.name
-      );
+
+      const exif =
+        await extractExif(
+          file.path,
+          file.name
+        );
 
       let geo = {};
 
       if (
-        exif.latitude &&
-        exif.longitude
+        exif.latitude != null &&
+        exif.longitude != null
       ) {
-        geo = await reverseGeocode(
-          exif.latitude,
-          exif.longitude
-        );
+        geo =
+          await reverseGeocode(
+            exif.latitude,
+            exif.longitude
+          );
       }
 
       return {
@@ -32,4 +37,6 @@ export async function getPhotoMetadata(): Promise<PhotoMetadata[]> {
       };
     })
   );
+
+  return results;
 }
