@@ -20,16 +20,17 @@ export async function getPhotoMetadata(): Promise<PhotoMetadata[]> {
 
       let geo = {};
 
-      if (
-        exif.latitude != null &&
-        exif.longitude != null
-      ) {
-        geo =
-          await reverseGeocode(
-            exif.latitude,
-            exif.longitude
-          );
-      }
+if (
+  exif.latitude != null &&
+  exif.longitude != null &&
+  !exif.city &&
+  !exif.state
+) {
+  geo = await reverseGeocode(
+    exif.latitude,
+    exif.longitude
+  );
+}
 
       return {
         ...exif,
