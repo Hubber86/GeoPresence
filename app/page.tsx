@@ -9,14 +9,21 @@ import ExportButtons from "@/components/dashboard/ExportButtons";
 
 import { getAttendanceReport } from "@/lib/report";
 import { getPhotoMetadata } from "@/lib/photos";
+import { buildAttendance } from "@/lib/attendance";
 
 export default async function HomePage() {
   try {
-    const [report, photos] = await Promise.all([
-      getAttendanceReport(),
-      getPhotoMetadata(),
-    ]);
+    // const [report, photos] = await Promise.all([
+    //   getAttendanceReport(),
+    //   getPhotoMetadata(),
+    // ]);
 
+const photos =
+  await getPhotoMetadata();
+
+const report =
+  buildAttendance(photos);
+    
     console.log(
       "REPORT:",
       report.length
