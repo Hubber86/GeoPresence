@@ -36,6 +36,25 @@ export async function extractGpsFromImage(
   filePath: string
 ): Promise<OcrGpsResult> {
 
+  /*
+   * Disable OCR on Vercel
+   * Prevents Function Timeout
+   */
+  if (process.env.VERCEL) {
+    console.log(
+      "[OCR] Disabled on Vercel"
+    );
+
+    return {
+      address: "",
+      city: "",
+      state: "",
+      country: "",
+      postalCode: "",
+      rawText: "",
+    };
+  }
+
   let worker: any = null;
 
   try {
@@ -75,13 +94,9 @@ export async function extractGpsFromImage(
     let address = "";
 
     const coordinatePatterns = [
-
       /Latitude\s*[:\-]?\s*([+-]?\d+\.\d+).*?Longitude\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
-
       /Lat\s*[:\-]?\s*([+-]?\d+\.\d+).*?Long\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
-
       /Lat([+-]?\d+\.\d+)Long([+-]?\d+\.\d+)/is,
-
       /([+-]?\d{1,2}\.\d{4,})[^\d]+([+-]?\d{1,3}\.\d{4,})/is,
     ];
 
@@ -149,17 +164,6 @@ export async function extractGpsFromImage(
         .replace(/\n/g, ", ")
         .substring(0, 250)
         .trim();
-
-    console.log(
-      "[OCR RESULT]",
-      {
-        latitude,
-        longitude,
-        city,
-        state,
-        postalCode,
-      }
-    );
 
     await worker.terminate();
 
