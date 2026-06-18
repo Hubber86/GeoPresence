@@ -1,12 +1,13 @@
-import Tesseract
-from "tesseract.js";
-
-export async function
-extractGpsFromImage(
+export async function extractGpsFromImage(
   filePath: string
 ) {
 
   try {
+
+    const Tesseract =
+      await import(
+        "tesseract.js"
+      );
 
     const result =
       await Tesseract.recognize(
@@ -17,8 +18,6 @@ extractGpsFromImage(
     const text =
       result.data.text;
 
-    console.log(text);
-
     let latitude;
     let longitude;
 
@@ -28,12 +27,11 @@ extractGpsFromImage(
 
       /([+-]?\d{1,2}\.\d{5,})[^\d]+([+-]?\d{1,3}\.\d{5,})/,
 
+      /(\d+\.\d+)\s*[N]?[,\s]+(\d+\.\d+)\s*[E]?/i,
+
     ];
 
-    for (
-      const pattern
-      of patterns
-    ) {
+    for (const pattern of patterns) {
 
       const match =
         text.match(pattern);
