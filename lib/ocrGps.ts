@@ -11,45 +11,60 @@ export interface OcrGpsResult {
   rawText?: string;
 }
 
+function isValidCoordinate(
+  latitude?: number,
+  longitude?: number
+): boolean {
+
+  if (
+    latitude === undefined ||
+    longitude === undefined
+  ) {
+    return false;
+  }
+
+  return (
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  );
+}
+
 export async function extractGpsFromImage(
   filePath: string
 ): Promise<OcrGpsResult> {
+
   try {
 
     console.log(
-      `OCR Processing: ${filePath}`
+      `[OCR] Processing ${filePath}`
     );
 
     const {
       data: { text }
-    } = await Tesseract.recognize(
-      filePath,
-      "eng",
-      {
-        logger: (m) => {
-          if (m.status === "recognizing text") {
-            console.log(
-              `OCR ${Math.round(
-                m.progress * 100
-              )}%`
-            );
-          }
-        }
-      }
-    );
+    } =
+      await Tesseract.recognize(
+        filePath,
+        "eng"
+      );
+
+    const rawText =
+      text || "";
 
     console.log(
-      "===== OCR OUTPUT START ====="
+      "[OCR] Extracted Text:"
     );
 
-    console.log(text);
+    console.log(rawText);
 
-    console.log(
-      "===== OCR OUTPUT END ====="
-    );
+    let latitude:
+      | number
+      | undefined;
 
-    let latitude: number | undefined;
-    let longitude: number | undefined;
+    let longitude:
+      | number
+      | undefined;
 
     let city = "";
     let state = "";
@@ -60,65 +75,89 @@ export async function extractGpsFromImage(
       // Latitude:18.47105 Longitude:73.792701
       /Latitude\s*[:\-]?\s*([+-]?\d+\.\d+).*?Longitude\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
 
-      // Lat 18.47105 Long 73.792701
+      // Lat:18.47105 Long:73.792701
       /Lat\s*[:\-]?\s*([+-]?\d+\.\d+).*?Long\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
 
       // Lat18.47105Long73.792701
       /Lat([+-]?\d+\.\d+)Long([+-]?\d+\.\d+)/is,
 
-      // Standalone coordinates
+      // GPS Map Camera watermark
       /([+-]?\d{1,2}\.\d{4,})[^\d]+([+-]?\d{1,3}\.\d{4,})/is,
     ];
 
-    for (const pattern of coordinatePatterns) {
+    for (
+      const pattern
+      of coordinatePatterns
+    ) {
 
       const match =
-        text.match(pattern);
+        rawText.match(pattern);
 
       if (match) {
 
-        latitude =
+        const lat =
           Number(match[1]);
 
-        longitude =
+        const lon =
           Number(match[2]);
 
-        console.log(
-          `GPS Found: ${latitude}, ${longitude}`
-        );
+        if (
+          isValidCoordinate(
+            lat,
+            lon
+          )
+        ) {
 
-        break;
+          latitude = lat;
+          longitude = lon;
+
+          console.log(
+            `[OCR] GPS Found: ${latitude}, ${longitude}`
+          );
+
+          break;
+        }
       }
     }
 
     const pinMatch =
-      text.match(/\b\d{6}\b/);
+      rawText.match(
+        /\b\d{6}\b/
+      );
 
     if (pinMatch) {
       postalCode =
         pinMatch[0];
     }
 
-    const indiaLocationMatch =
-      text.match(
-        /([A-Za-z ]+),\s*([A-Za-z ]+),\s*India/i
+    const indiaPattern =
+      /([A-Za-z ]+),\s*([A-Za-z ]+),\s*India/i;
+
+    const locationMatch =
+      rawText.match(
+        indiaPattern
       );
 
-    if (indiaLocationMatch) {
+    if (
+      locationMatch
+    ) {
 
       city =
-        indiaLocationMatch[1]
+        locationMatch[1]
           .trim();
 
       state =
-        indiaLocationMatch[2]
+        locationMatch[2]
           .trim();
     }
 
-    if (!city || !state) {
+    if (
+      !city ||
+      !state
+    ) {
 
       const lines =
-        text
+        rawText
           .split("\n")
           .map(
             (line) =>
@@ -126,7 +165,10 @@ export async function extractGpsFromImage(
           )
           .filter(Boolean);
 
-      for (const line of lines) {
+      for (
+        const line
+        of lines
+      ) {
 
         const match =
           line.match(
@@ -137,16 +179,29 @@ export async function extractGpsFromImage(
 
           city =
             city ||
-            match[1].trim();
+            match[1]
+              .trim();
 
           state =
             state ||
-            match[2].trim();
+            match[2]
+              .trim();
 
           break;
         }
       }
     }
+
+    console.log(
+      "[OCR] Final Result",
+      {
+        latitude,
+        longitude,
+        city,
+        state,
+        postalCode,
+      }
+    );
 
     return {
       latitude,
@@ -154,13 +209,13 @@ export async function extractGpsFromImage(
       city,
       state,
       postalCode,
-      rawText: text,
+      rawText,
     };
 
   } catch (error) {
 
     console.error(
-      "OCR Extraction Failed:",
+      "[OCR] Failed",
       error
     );
 
@@ -168,6 +223,7 @@ export async function extractGpsFromImage(
       city: "",
       state: "",
       postalCode: "",
+      rawText: "",
     };
   }
 }
