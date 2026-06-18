@@ -35,15 +35,21 @@ function isValidCoordinate(
 export async function extractGpsFromImage(
   filePath: string
 ): Promise<OcrGpsResult> {
-  let worker: any;
+
+  let worker: any = null;
 
   try {
+
     console.log(
       `[OCR] Processing ${filePath}`
     );
 
     worker =
-      await createWorker("eng");
+      await createWorker("eng", 1, {
+        langPath:
+          "https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng/4.0.0_best",
+        cacheMethod: "none",
+      });
 
     const {
       data: { text },
@@ -69,6 +75,7 @@ export async function extractGpsFromImage(
     let address = "";
 
     const coordinatePatterns = [
+
       /Latitude\s*[:\-]?\s*([+-]?\d+\.\d+).*?Longitude\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
 
       /Lat\s*[:\-]?\s*([+-]?\d+\.\d+).*?Long\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
@@ -79,10 +86,13 @@ export async function extractGpsFromImage(
     ];
 
     for (const pattern of coordinatePatterns) {
+
       const match =
         rawText.match(pattern);
 
-      if (!match) continue;
+      if (!match) {
+        continue;
+      }
 
       const lat =
         Number(match[1]);
@@ -112,27 +122,32 @@ export async function extractGpsFromImage(
         pinMatch[0];
     }
 
-    const indiaMatch =
+    const stateMatch =
       rawText.match(
-        /([A-Za-z ]+),\s*([A-Za-z ]+),\s*India/i
+        /(Maharashtra|Karnataka|Goa|Gujarat|Tamil Nadu|Kerala|Delhi)/i
       );
 
-    if (indiaMatch) {
-      city =
-        indiaMatch[1].trim();
-
+    if (stateMatch) {
       state =
-        indiaMatch[2].trim();
-
+        stateMatch[1];
       country =
         "India";
     }
 
+    const cityMatch =
+      rawText.match(
+        /\b(Pune|Mumbai|Bengaluru|Bangalore|Delhi|Hyderabad|Chennai)\b/i
+      );
+
+    if (cityMatch) {
+      city =
+        cityMatch[1];
+    }
+
     address =
       rawText
-        .split("\n")
-        .slice(0, 3)
-        .join(", ")
+        .replace(/\n/g, ", ")
+        .substring(0, 250)
         .trim();
 
     console.log(
@@ -151,16 +166,16 @@ export async function extractGpsFromImage(
     return {
       latitude,
       longitude,
-
       address,
       city,
       state,
       country,
       postalCode,
-
       rawText,
     };
+
   } catch (error) {
+
     console.error(
       "[OCR ERROR]",
       error
