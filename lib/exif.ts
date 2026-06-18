@@ -9,125 +9,134 @@ export async function extractExif(
   filePath: string,
   fileName: string
 ): Promise<PhotoMetadata> {
-
-  let exif: any = {};
-
   try {
-    exif = await exifr.parse(
-      filePath,
-      true
-    );
-  } catch (error) {
-    console.error(
-      `EXIF read failed for ${fileName}`,
-      error
-    );
-  }
+    const exif = await exifr.parse(filePath, {
+      gps: true,
+      tiff: true,
+      exif: true,
+      xmp: true,
+      icc: false,
+      iptc: false,
+    });
 
-  let latitude =
-    exif?.latitude;
+    let latitude: number | undefined =
+      exif?.latitude;
 
-  let longitude =
-    exif?.longitude;
+    let longitude: number | undefined =
+      exif?.longitude;
 
-  let city = "";
-  let state = "";
-  let postalCode = "";
-  let country = "";
-  let address = "";
-
-  // OCR fallback if EXIF GPS missing
-  if (
-    latitude == null ||
-    longitude == null
-  ) {
-
-    console.log(
-      `No EXIF GPS found for ${fileName}. Running OCR...`
-    );
-
-    const ocr =
-      await extractGpsFromImage(
-        filePath
+    /*
+     * Fallback to OCR only if GPS
+     * not available in EXIF
+     */
+    if (
+      latitude == null ||
+      longitude == null
+    ) {
+      console.log(
+        `[OCR FALLBACK] ${fileName}`
       );
 
-    latitude =
-      ocr.latitude;
+      const ocr =
+        await extractGpsFromImage(
+          filePath
+        );
 
-    longitude =
-      ocr.longitude;
+      latitude =
+        ocr.latitude;
 
-    city =
-      ocr.city || "";
+      longitude =
+        ocr.longitude;
 
-    state =
-      ocr.state || "";
+      console.log(
+        `[OCR RESULT] ${fileName}`,
+        {
+          latitude,
+          longitude,
+        }
+      );
+    }
 
-    postalCode =
-      ocr.postalCode || "";
+    const dateValue =
+      exif?.DateTimeOriginal ||
+      exif?.CreateDate ||
+      exif?.ModifyDate ||
+      new Date();
 
-    country =
-      city || state
-        ? "India"
-        : "";
+    const date =
+      new Date(dateValue);
+
+    return {
+      fileName,
+
+      timestamp:
+        date.getTime(),
+
+      dateTaken:
+        format(
+          date,
+          "yyyy-MM-dd"
+        ),
+
+      timeTaken:
+        format(
+          date,
+          "HH:mm:ss"
+        ),
+
+      latitude,
+      longitude,
+
+      camera: [
+        exif?.Make,
+        exif?.Model,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim(),
+
+      address: "",
+      city: "",
+      district: "",
+      state: "",
+      country: "",
+      postalCode: "",
+    };
+  } catch (error) {
+    console.error(
+      `[EXIF ERROR] ${fileName}`,
+      error
+    );
+
+    return {
+      fileName,
+
+      timestamp:
+        Date.now(),
+
+      dateTaken:
+        format(
+          new Date(),
+          "yyyy-MM-dd"
+        ),
+
+      timeTaken:
+        format(
+          new Date(),
+          "HH:mm:ss"
+        ),
+
+      latitude: undefined,
+      longitude: undefined,
+
+      camera: "",
+
+      address: "",
+      city: "",
+      district: "",
+      state: "",
+      country: "",
+      postalCode: "",
+    };
   }
-
-  const dateValue =
-    exif?.DateTimeOriginal ||
-    exif?.CreateDate ||
-    exif?.ModifyDate ||
-    new Date();
-
-  const date =
-    new Date(dateValue);
-
-  const camera =
-    [
-      exif?.Make,
-      exif?.Model,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-
-  console.log({
-    fileName,
-    latitude,
-    longitude,
-    city,
-    state,
-    postalCode,
-  });
-
-  return {
-
-    fileName,
-
-    timestamp:
-      date.getTime(),
-
-    dateTaken:
-      format(
-        date,
-        "yyyy-MM-dd"
-      ),
-
-    timeTaken:
-      format(
-        date,
-        "HH:mm:ss"
-      ),
-
-    latitude,
-    longitude,
-
-    camera,
-
-    address,
-    city,
-    district: "",
-    state,
-    country,
-    postalCode,
-  };
 }
