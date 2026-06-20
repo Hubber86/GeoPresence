@@ -7,24 +7,28 @@ import {
   Navigation,
 } from "lucide-react";
 
-export interface PhotoMetadata {
-  fileName: string;
+// export interface PhotoMetadata {
+//   fileName: string;
 
-  latitude?: number;
-  longitude?: number;
+//   latitude?: number;
+//   longitude?: number;
 
-  dateTaken?: string;
-  timeTaken?: string;
+//   dateTaken?: string;
+//   timeTaken?: string;
 
-  address?: string;
-  city?: string;
-  district?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
+//   address?: string;
+//   city?: string;
+//   district?: string;
+//   state?: string;
+//   country?: string;
+//   postalCode?: string;
 
-  camera?: string;
-}
+//   camera?: string;
+// }
+
+import type {
+  PhotoMetadata,
+} from "@/lib/types";
 
 interface PhotoViewerProps {
   photos: PhotoMetadata[];
