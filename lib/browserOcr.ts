@@ -177,32 +177,43 @@ export async function runBrowserOcr(
     | number
     | undefined;
 
-  let address = "";
+  /*
+   * Extract GPS Coordinates
+   */
+  const coordinatePatterns = [
 
-  const patterns = [
     /Latitude\s*[:\-]?\s*([+-]?\d+\.\d+).*?Longitude\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
 
     /Lat\s*[:\-]?\s*([+-]?\d+\.\d+).*?Long\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
 
-    /Lat\s*([+-]?\d+\.\d+)°?\s*Long\s*([+-]?\d+\.\d+)°?/is,
+    /Lat\s*([+-]?\d+\.\d+).*?Long\s*([+-]?\d+\.\d+)/is,
 
     /([+-]?\d{1,2}\.\d{4,})[^\d]+([+-]?\d{1,3}\.\d{4,})/is,
   ];
 
-  for (const pattern of patterns) {
+  for (
+    const pattern
+    of coordinatePatterns
+  ) {
 
     const match =
-      rawText.match(pattern);
+      rawText.match(
+        pattern
+      );
 
     if (!match) {
       continue;
     }
 
     const lat =
-      Number(match[1]);
+      Number(
+        match[1]
+      );
 
     const lon =
-      Number(match[2]);
+      Number(
+        match[2]
+      );
 
     if (
       validCoordinate(
@@ -216,79 +227,165 @@ export async function runBrowserOcr(
     }
   }
 
+  /*
+   * Postal Code
+   */
   const pin =
     rawText.match(
       /\b\d{6}\b/
     );
 
-  const city =
-    rawText.match(
-      /\b(Pune|Mumbai|Bengaluru|Bangalore|Delhi|Hyderabad|Chennai)\b/i
-    );
-
+  /*
+   * State
+   */
   const state =
     rawText.match(
       /(Maharashtra|Karnataka|Goa|Gujarat|Tamil Nadu|Kerala|Delhi)/i
     );
 
   /*
-   * Clean Address Extraction
-   *
-   * Extract everything before
-   * Lat xx.xxxxxx Long yy.yyyyyy
+   * City
    */
-
-  const addressMatch =
+  const city =
     rawText.match(
-      /(.*?)(?=Lat\s*\d+\.\d+)/is
+      /\b(Pune|Mumbai|Bengaluru|Bangalore|Delhi|Hyderabad|Chennai)\b/i
     );
 
-  if (addressMatch) {
+  /*
+   * Address Extraction
+   *
+   * Prefer industrial estate /
+   * locality text instead of
+   * OCR garbage at image top.
+   */
+  let address = "";
+
+  const addressPatterns = [
+
+    /((?:Pandhari).*?411023.*?India)/is,
+
+    /((?:Dangat).*?411023.*?India)/is,
+
+    /((?:Industrial).*?411023.*?India)/is,
+
+    /((?:Shivane).*?411023.*?India)/is,
+
+    /((?:Pune).*?411023.*?India)/is,
+  ];
+
+  for (
+    const pattern
+    of addressPatterns
+  ) {
+
+    const match =
+      rawText.match(
+        pattern
+      );
+
+    if (!match) {
+      continue;
+    }
 
     address =
-      addressMatch[1]
-        .replace(/\n/g, " ")
-        .replace(/\s+/g, " ")
-
+      match[1]
         .replace(
-          /GPS\s*Map\s*Camera/gi,
-          ""
+          /\n/g,
+          " "
         )
-
         .replace(
-          /Google!?/gi,
-          ""
+          /\s+/g,
+          " "
         )
-
-        .replace(
-          /GMT\s*\+\d+:\d+/gi,
-          ""
-        )
-
-        .replace(
-          /\=\=/g,
-          ""
-        )
-
         .trim();
+
+    break;
   }
 
   /*
-   * Final cleanup:
-   * If OCR address is garbage,
-   * build a clean address from
-   * extracted fields.
+   * Fallback:
+   * Extract text before Lat
    */
+  if (!address) {
 
+    const fallback =
+      rawText.match(
+        /(.*?)(?=Lat\s*[+-]?\d+\.\d+)/is
+      );
+
+    if (
+      fallback?.[1]
+    ) {
+
+      address =
+        fallback[1]
+          .replace(
+            /\n/g,
+            " "
+          )
+          .replace(
+            /\s+/g,
+            " "
+          )
+          .trim();
+    }
+  }
+
+  /*
+   * Cleanup OCR Noise
+   */
+  address = address
+
+    .replace(
+      /GPS\s*Map\s*Camera/gi,
+      ""
+    )
+
+    .replace(
+      /GPs\s*Map\s*camera/gi,
+      ""
+    )
+
+    .replace(
+      /Google!?/gi,
+      ""
+    )
+
+    .replace(
+      /GMT\s*\+\d+:\d+/gi,
+      ""
+    )
+
+    .replace(
+      /=+/g,
+      ""
+    )
+
+    .replace(
+      /[|\\"]/g,
+      " "
+    )
+
+    .replace(
+      /\s+/g,
+      " "
+    )
+
+    .trim();
+
+  /*
+   * Final fallback
+   */
   if (
-    address.length < 15 ||
-    address.length > 250
+    !address ||
+    address.length < 20
   ) {
+
     address = [
       city?.[1],
       state?.[1],
       pin?.[0],
-      state ? "India" : "",
+      "India",
     ]
       .filter(Boolean)
       .join(", ");
