@@ -162,9 +162,11 @@ import AttendanceTable, {
   AttendanceRecord,
 } from "@/components/dashboard/AttendanceTable";
 
-import PhotoViewer, {
+import PhotoViewer from "@/components/dashboard/PhotoViewer";
+
+import type {
   PhotoMetadata,
-} from "@/components/dashboard/PhotoViewer";
+} from "@/lib/types";
 
 import { buildAttendance }
 from "@/lib/attendance";
@@ -198,12 +200,12 @@ export default function DashboardClient({
    * Browser photos
    * merged with OCR cache
    */
-  const [
-    browserPhotos,
-    setBrowserPhotos,
-  ] = useState(
-    photos
-  );
+const [
+  browserPhotos,
+  setBrowserPhotos,
+] = useState<PhotoMetadata[]>(
+  photos
+);
 
   /*
    * Load OCR cache
