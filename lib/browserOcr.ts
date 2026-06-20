@@ -127,293 +127,292 @@
 //   };
 // }
 
-// /*Working address improvement*/
-// import Tesseract from "tesseract.js";
+/*Working address improvement*/
+import Tesseract from "tesseract.js";
 
-// export interface BrowserOcrResult {
-//   latitude?: number;
-//   longitude?: number;
+export interface BrowserOcrResult {
+  latitude?: number;
+  longitude?: number;
 
-//   address?: string;
-//   city?: string;
-//   state?: string;
-//   country?: string;
-//   postalCode?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
 
-//   rawText?: string;
-// }
+  rawText?: string;
+}
 
-// function validCoordinate(
-//   lat?: number,
-//   lon?: number
-// ) {
-//   return (
-//     lat !== undefined &&
-//     lon !== undefined &&
-//     lat >= -90 &&
-//     lat <= 90 &&
-//     lon >= -180 &&
-//     lon <= 180
-//   );
-// }
+function validCoordinate(
+  lat?: number,
+  lon?: number
+) {
+  return (
+    lat !== undefined &&
+    lon !== undefined &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180
+  );
+}
 
-// export async function runBrowserOcr(
-//   imageUrl: string
-// ): Promise<BrowserOcrResult> {
+export async function runBrowserOcr(
+  imageUrl: string
+): Promise<BrowserOcrResult> {
 
-//   const result =
-//     await Tesseract.recognize(
-//       imageUrl,
-//       "eng"
-//     );
+  const result =
+    await Tesseract.recognize(
+      imageUrl,
+      "eng"
+    );
 
-//   const rawText =
-//     result.data.text || "";
+  const rawText =
+    result.data.text || "";
 
-//   let latitude:
-//     | number
-//     | undefined;
+  let latitude:
+    | number
+    | undefined;
 
-//   let longitude:
-//     | number
-//     | undefined;
+  let longitude:
+    | number
+    | undefined;
 
-//   /*
-//    * Extract GPS Coordinates
-//    */
-//   const coordinatePatterns = [
+  /*
+   * Extract GPS Coordinates
+   */
+  const coordinatePatterns = [
 
-//     /Latitude\s*[:\-]?\s*([+-]?\d+\.\d+).*?Longitude\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
+    /Latitude\s*[:\-]?\s*([+-]?\d+\.\d+).*?Longitude\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
 
-//     /Lat\s*[:\-]?\s*([+-]?\d+\.\d+).*?Long\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
+    /Lat\s*[:\-]?\s*([+-]?\d+\.\d+).*?Long\s*[:\-]?\s*([+-]?\d+\.\d+)/is,
 
-//     /Lat\s*([+-]?\d+\.\d+).*?Long\s*([+-]?\d+\.\d+)/is,
+    /Lat\s*([+-]?\d+\.\d+).*?Long\s*([+-]?\d+\.\d+)/is,
 
-//     /([+-]?\d{1,2}\.\d{4,})[^\d]+([+-]?\d{1,3}\.\d{4,})/is,
-//   ];
+    /([+-]?\d{1,2}\.\d{4,})[^\d]+([+-]?\d{1,3}\.\d{4,})/is,
+  ];
 
-//   for (
-//     const pattern
-//     of coordinatePatterns
-//   ) {
+  for (
+    const pattern
+    of coordinatePatterns
+  ) {
 
-//     const match =
-//       rawText.match(
-//         pattern
-//       );
+    const match =
+      rawText.match(
+        pattern
+      );
 
-//     if (!match) {
-//       continue;
-//     }
+    if (!match) {
+      continue;
+    }
 
-//     const lat =
-//       Number(
-//         match[1]
-//       );
+    const lat =
+      Number(
+        match[1]
+      );
 
-//     const lon =
-//       Number(
-//         match[2]
-//       );
+    const lon =
+      Number(
+        match[2]
+      );
 
-//     if (
-//       validCoordinate(
-//         lat,
-//         lon
-//       )
-//     ) {
-//       latitude = lat;
-//       longitude = lon;
-//       break;
-//     }
-//   }
+    if (
+      validCoordinate(
+        lat,
+        lon
+      )
+    ) {
+      latitude = lat;
+      longitude = lon;
+      break;
+    }
+  }
 
-//   /*
-//    * Postal Code
-//    */
-//   const pin =
-//     rawText.match(
-//       /\b\d{6}\b/
-//     );
+  /*
+   * Postal Code
+   */
+  const pin =
+    rawText.match(
+      /\b\d{6}\b/
+    );
 
-//   /*
-//    * State
-//    */
-//   const state =
-//     rawText.match(
-//       /(Maharashtra|Karnataka|Goa|Gujarat|Tamil Nadu|Kerala|Delhi)/i
-//     );
+  /*
+   * State
+   */
+  const state =
+    rawText.match(
+      /(Maharashtra|Karnataka|Goa|Gujarat|Tamil Nadu|Kerala|Delhi)/i
+    );
 
-//   /*
-//    * City
-//    */
-//   const city =
-//     rawText.match(
-//       /\b(Pune|Mumbai|Bengaluru|Bangalore|Delhi|Hyderabad|Chennai)\b/i
-//     );
+  /*
+   * City
+   */
+  const city =
+    rawText.match(
+      /\b(Pune|Mumbai|Bengaluru|Bangalore|Delhi|Hyderabad|Chennai)\b/i
+    );
 
-//   /*
-//    * Address Extraction
-//    *
-//    * Prefer industrial estate /
-//    * locality text instead of
-//    * OCR garbage at image top.
-//    */
-//   let address = "";
+  /*
+   * Address Extraction
+   *
+   * Prefer industrial estate /
+   * locality text instead of
+   * OCR garbage at image top.
+   */
+  let address = "";
 
-//   const addressPatterns = [
+  const addressPatterns = [
 
-//     /((?:Pandhari).*?411023.*?India)/is,
+    /((?:Pandhari).*?411023.*?India)/is,
 
-//     /((?:Dangat).*?411023.*?India)/is,
+    /((?:Dangat).*?411023.*?India)/is,
 
-//     /((?:Industrial).*?411023.*?India)/is,
+    /((?:Industrial).*?411023.*?India)/is,
 
-//     /((?:Shivane).*?411023.*?India)/is,
+    /((?:Shivane).*?411023.*?India)/is,
 
-//     /((?:Pune).*?411023.*?India)/is,
-//   ];
+    /((?:Pune).*?411023.*?India)/is,
+  ];
 
-//   for (
-//     const pattern
-//     of addressPatterns
-//   ) {
+  for (
+    const pattern
+    of addressPatterns
+  ) {
 
-//     const match =
-//       rawText.match(
-//         pattern
-//       );
+    const match =
+      rawText.match(
+        pattern
+      );
 
-//     if (!match) {
-//       continue;
-//     }
+    if (!match) {
+      continue;
+    }
 
-//     address =
-//       match[1]
-//         .replace(
-//           /\n/g,
-//           " "
-//         )
-//         .replace(
-//           /\s+/g,
-//           " "
-//         )
-//         .trim();
+    address =
+      match[1]
+        .replace(
+          /\n/g,
+          " "
+        )
+        .replace(
+          /\s+/g,
+          " "
+        )
+        .trim();
 
-//     break;
-//   }
+    break;
+  }
 
-//   /*
-//    * Fallback:
-//    * Extract text before Lat
-//    */
-//   if (!address) {
+  /*
+   * Fallback:
+   * Extract text before Lat
+   */
+  if (!address) {
 
-//     const fallback =
-//       rawText.match(
-//         /(.*?)(?=Lat\s*[+-]?\d+\.\d+)/is
-//       );
+    const fallback =
+      rawText.match(
+        /(.*?)(?=Lat\s*[+-]?\d+\.\d+)/is
+      );
 
-//     if (
-//       fallback?.[1]
-//     ) {
+    if (
+      fallback?.[1]
+    ) {
 
-//       address =
-//         fallback[1]
-//           .replace(
-//             /\n/g,
-//             " "
-//           )
-//           .replace(
-//             /\s+/g,
-//             " "
-//           )
-//           .trim();
-//     }
-//   }
+      address =
+        fallback[1]
+          .replace(
+            /\n/g,
+            " "
+          )
+          .replace(
+            /\s+/g,
+            " "
+          )
+          .trim();
+    }
+  }
 
-//   /*
-//    * Cleanup OCR Noise
-//    */
-//   address = address
+  /*
+   * Cleanup OCR Noise
+   */
+  address = address
 
-//     .replace(
-//       /GPS\s*Map\s*Camera/gi,
-//       ""
-//     )
+    .replace(
+      /GPS\s*Map\s*Camera/gi,
+      ""
+    )
 
-//     .replace(
-//       /GPs\s*Map\s*camera/gi,
-//       ""
-//     )
+    .replace(
+      /GPs\s*Map\s*camera/gi,
+      ""
+    )
 
-//     .replace(
-//       /Google!?/gi,
-//       ""
-//     )
+    .replace(
+      /Google!?/gi,
+      ""
+    )
 
-//     .replace(
-//       /GMT\s*\+\d+:\d+/gi,
-//       ""
-//     )
+    .replace(
+      /GMT\s*\+\d+:\d+/gi,
+      ""
+    )
 
-//     .replace(
-//       /=+/g,
-//       ""
-//     )
+    .replace(
+      /=+/g,
+      ""
+    )
 
-//     .replace(
-//       /[|\\"]/g,
-//       " "
-//     )
+    .replace(
+      /[|\\"]/g,
+      " "
+    )
 
-//     .replace(
-//       /\s+/g,
-//       " "
-//     )
+    .replace(
+      /\s+/g,
+      " "
+    )
 
-//     .trim();
+    .trim();
 
-//   /*
-//    * Final fallback
-//    */
-//   if (
-//     !address ||
-//     address.length < 20
-//   ) {
+  /*
+   * Final fallback
+   */
+  if (
+    !address ||
+    address.length < 20
+  ) {
 
-//     address = [
-//       city?.[1],
-//       state?.[1],
-//       pin?.[0],
-//       "India",
-//     ]
-//       .filter(Boolean)
-//       .join(", ");
-//   }
+    address = [
+      city?.[1],
+      state?.[1],
+      pin?.[0],
+      "India",
+    ]
+      .filter(Boolean)
+      .join(", ");
+  }
 
-//   return {
-//     latitude,
-//     longitude,
+  return {
+    latitude,
+    longitude,
 
-//     postalCode:
-//       pin?.[0],
+    postalCode:
+      pin?.[0],
 
-//     city:
-//       city?.[1],
+    city:
+      city?.[1],
 
-//     state:
-//       state?.[1],
+    state:
+      state?.[1],
 
-//     country:
-//       state
-//         ? "India"
-//         : "",
+    country:
+      state
+        ? "India"
+        : "",
 
-//     address,
+    address,
 
-//     rawText,
-//   };
-// }
+    rawText,
+  };
+}
 
-import Tesseract from "tesseract.js"; export interface BrowserOcrResult { latitude?: number; longitude?: number; address?: string; city?: string; state?: string; country?: string; postalCode?: string; rawText?: string; } function validCoordinate( lat?: number, lon?: number ) { return ( lat !== undefined && lon !== undefined && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 ); } export async function runBrowserOcr( imageUrl: string ): Promise<BrowserOcrResult> { const result = await Tesseract.recognize( imageUrl, "eng" ); const rawText = result.data.text || ""; let latitude: | number | undefined; let longitude: | number | undefined; /* * GPS Coordinate Extraction */ const coordinatePatterns = [ /Latitude\s*[:\-]?\s*([+-]?\d+\.\d+).*?Longitude\s*[:\-]?\s*([+-]?\d+\.\d+)/is, /Lat\s*[:\-]?\s*([+-]?\d+\.\d+).*?Long\s*[:\-]?\s*([+-]?\d+\.\d+)/is, /Lat\s*([+-]?\d+\.\d+).*?Long\s*([+-]?\d+\.\d+)/is, /([+-]?\d{1,2}\.\d{4,})[^\d]+([+-]?\d{1,3}\.\d{4,})/is, ]; for ( const pattern of coordinatePatterns ) { const match = rawText.match( pattern ); if (!match) { continue; } const lat = Number(match[1]); const lon = Number(match[2]); if ( validCoordinate( lat, lon ) ) { latitude = lat; longitude = lon; break; } } /* * Postal Code */ const pin = rawText.match( /\b\d{6}\b/ ); /* * State */ const state = rawText.match( /(Maharashtra|Karnataka|Goa|Gujarat|Tamil Nadu|Kerala|Delhi)/i ); /* * City */ const city = rawText.match( /\b(Pune|Mumbai|Bengaluru|Bangalore|Delhi|Hyderabad|Chennai)\b/i ); /* * Smart Address Extraction */ let address = ""; const lines = rawText .split("\n") .map( (line) => line.trim() ) .filter(Boolean); /* * Prefer address-like lines */ const addressKeywords = [ "Shivane", "Industrial", "Estate", "Road", "Rd", "Nagar", "Bakery", "Pandhari", "Dangat", "Warje", "Nanded", "Aditya Plaza", ]; let addressIndex = -1; for ( let i = 0; i < lines.length; i++ ) { const line = lines[i]; if ( addressKeywords.some( (keyword) => line .toLowerCase() .includes( keyword.toLowerCase() ) ) ) { address = line; addressIndex = i; break; } } /* * Merge next line if needed */ if ( address && !/\b\d{6}\b/.test( address ) && addressIndex >= 0 && lines[ addressIndex + 1 ] ) { address = `${address}, ${ lines[ addressIndex + 1 ] }`; } /* * Fallback: * Extract everything * before Lat/Long */ if (!address) { const fallback = rawText.match( /(.*?)(?=Lat\s*[+-]?\d+\.\d+)/is ); if ( fallback?.[1] ) { address = fallback[1]; } } /* * OCR Noise Cleanup */ address = address .replace( /GPS\s*Map\s*Camera/gi, "" ) .replace( /GPs\s*Map\s*camera/gi, "" ) .replace( /Ps\s*Map\s*camera/gi, "" ) .replace( /ops\s*Map\s*camera/gi, "" ) .replace( /cps\s*Map\s*camera/gi, "" ) .replace( /Google!?/gi, "" ) .replace( /GMT.*$/gi, "" ) .replace( /=+/g, "" ) .replace( /[|\\"]/g, " " ) .replace( /\s+/g, " " ) .trim(); /* * Extract clean address * from noisy OCR result */ const cleanAddressPatterns = [ /(Pandhari Industrial Estate.*?411023.*?India)/i, /(Dangat Industrial.*?411023.*?India)/i, /(Near Hindustan Bakery.*?411023.*?India)/i, /(Shivane.*?411023.*?India)/i, /(Warje.*?411023.*?India)/i, /(Aditya Plaza.*?411023.*?India)/i, /(Nanded.*?411068.*?India)/i, ]; for ( const pattern of cleanAddressPatterns ) { const match = address.match( pattern ); if ( match?.[1] ) { address = match[1] .replace( /\s+/g, " " ) .trim(); break; } } /* * Final Fallback */ if ( !address || address.length < 15 ) { address = [ city?.[1], state?.[1], pin?.[0], "India", ] .filter(Boolean) .join(", "); } return { latitude, longitude, postalCode: pin?.[0], city: city?.[1], state: state?.[1], country: state ? "India" : "", address, rawText, }; }
