@@ -189,8 +189,11 @@ export default async function HomePage() {
 
           <DashboardHeader />
 
-          <OcrTrigger />
-
+          {/* <OcrTrigger /> */}
+            <OcrTrigger
+            photos={photos}
+            />
+            
           <SummaryCards
             totalPhotos={
               totalPhotos
