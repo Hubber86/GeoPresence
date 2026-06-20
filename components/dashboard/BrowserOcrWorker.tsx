@@ -58,12 +58,14 @@ export default function BrowserOcrWorker({
             photo.fileName
           ] = result;
 
-          localStorage.setItem(
-            "ocr-cache",
-            JSON.stringify(
-              cache
-            )
-          );
+        localStorage.setItem(
+          "ocr-cache",
+          JSON.stringify(cache)
+        );
+        
+        window.dispatchEvent(
+          new Event("ocr-complete")
+        );
 
         } catch (e) {
 
