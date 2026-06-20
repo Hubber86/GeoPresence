@@ -166,6 +166,9 @@ import PhotoViewer, {
   PhotoMetadata,
 } from "@/components/dashboard/PhotoViewer";
 
+import { buildAttendance }
+from "@/lib/attendance";
+
 interface DashboardClientProps {
   report: AttendanceRecord[];
   photos: PhotoMetadata[];
@@ -183,98 +186,210 @@ export default function DashboardClient({
   report,
   photos,
 }: DashboardClientProps) {
-  const [filters, setFilters] = useState(defaultFilters);
+
+  const [
+    filters,
+    setFilters,
+  ] = useState(
+    defaultFilters
+  );
 
   /*
-    Merge browser OCR cache
-    with server photo metadata
-  */
-  const [browserPhotos, setBrowserPhotos] =
-    useState<PhotoMetadata[]>(photos);
+   * Browser photos
+   * merged with OCR cache
+   */
+  const [
+    browserPhotos,
+    setBrowserPhotos,
+  ] = useState(
+    photos
+  );
 
+  /*
+   * Load OCR cache
+   * on startup
+   * and whenever OCR finishes
+   */
   useEffect(() => {
-    const cache = JSON.parse(
-      localStorage.getItem("ocr-cache") || "{}"
+
+    const reloadCache = () => {
+
+      try {
+
+        const cache =
+          JSON.parse(
+            localStorage.getItem(
+              "ocr-cache"
+            ) || "{}"
+          );
+
+        const merged =
+          photos.map(
+            (photo) => ({
+
+              ...photo,
+
+              ...(cache[
+                photo.fileName
+              ] || {}),
+            })
+          );
+
+        setBrowserPhotos(
+          merged
+        );
+
+      } catch (error) {
+
+        console.error(
+          "OCR Cache Error",
+          error
+        );
+      }
+    };
+
+    reloadCache();
+
+    window.addEventListener(
+      "ocr-complete",
+      reloadCache
     );
 
-    const merged = photos.map((photo) => ({
-      ...photo,
-      ...(cache[photo.fileName] || {}),
-    }));
+    return () =>
+      window.removeEventListener(
+        "ocr-complete",
+        reloadCache
+      );
 
-    setBrowserPhotos(merged);
   }, [photos]);
 
-  const filteredReport = useMemo(() => {
-    return report.filter((record) => {
-      const recordDate = new Date(record.date);
+  /*
+   * Rebuild attendance
+   * from OCR-enhanced photos
+   */
+  const browserReport =
+    useMemo(() => {
 
-      const startMatch =
-        !filters.startDate ||
-        recordDate >= new Date(filters.startDate);
-
-      const endMatch =
-        !filters.endDate ||
-        recordDate <= new Date(filters.endDate);
-
-      const stateMatch =
-        !filters.state ||
-        record.state
-          .toLowerCase()
-          .includes(filters.state.toLowerCase());
-
-      const cityMatch =
-        !filters.city ||
-        record.city
-          .toLowerCase()
-          .includes(filters.city.toLowerCase());
-
-      const pinMatch =
-        !filters.postalCode ||
-        record.postalCode.includes(
-          filters.postalCode
-        );
-
-      return (
-        startMatch &&
-        endMatch &&
-        stateMatch &&
-        cityMatch &&
-        pinMatch
+      return buildAttendance(
+        browserPhotos
       );
-    });
-  }, [report, filters]);
 
-  const filteredPhotos = useMemo(() => {
-    return browserPhotos.filter((photo) => {
-      const stateMatch =
-        !filters.state ||
-        photo.state
-          ?.toLowerCase()
-          .includes(filters.state.toLowerCase());
+    }, [browserPhotos]);
 
-      const cityMatch =
-        !filters.city ||
-        photo.city
-          ?.toLowerCase()
-          .includes(filters.city.toLowerCase());
+  /*
+   * Filter attendance
+   */
+  const filteredReport =
+    useMemo(() => {
 
-      const pinMatch =
-        !filters.postalCode ||
-        photo.postalCode?.includes(
-          filters.postalCode
-        );
+      return browserReport.filter(
+        (record) => {
 
-      return (
-        stateMatch &&
-        cityMatch &&
-        pinMatch
+          const recordDate =
+            new Date(
+              record.date
+            );
+
+          const startMatch =
+            !filters.startDate ||
+            recordDate >=
+              new Date(
+                filters.startDate
+              );
+
+          const endMatch =
+            !filters.endDate ||
+            recordDate <=
+              new Date(
+                filters.endDate
+              );
+
+          const stateMatch =
+            !filters.state ||
+            record.state
+              ?.toLowerCase()
+              .includes(
+                filters.state.toLowerCase()
+              );
+
+          const cityMatch =
+            !filters.city ||
+            record.city
+              ?.toLowerCase()
+              .includes(
+                filters.city.toLowerCase()
+              );
+
+          const pinMatch =
+            !filters.postalCode ||
+            record.postalCode
+              ?.includes(
+                filters.postalCode
+              );
+
+          return (
+            startMatch &&
+            endMatch &&
+            stateMatch &&
+            cityMatch &&
+            pinMatch
+          );
+        }
       );
-    });
-  }, [browserPhotos, filters]);
+
+    }, [
+      browserReport,
+      filters,
+    ]);
+
+  /*
+   * Filter photos
+   */
+  const filteredPhotos =
+    useMemo(() => {
+
+      return browserPhotos.filter(
+        (photo) => {
+
+          const stateMatch =
+            !filters.state ||
+            photo.state
+              ?.toLowerCase()
+              .includes(
+                filters.state.toLowerCase()
+              );
+
+          const cityMatch =
+            !filters.city ||
+            photo.city
+              ?.toLowerCase()
+              .includes(
+                filters.city.toLowerCase()
+              );
+
+          const pinMatch =
+            !filters.postalCode ||
+            photo.postalCode
+              ?.includes(
+                filters.postalCode
+              );
+
+          return (
+            stateMatch &&
+            cityMatch &&
+            pinMatch
+          );
+        }
+      );
+
+    }, [
+      browserPhotos,
+      filters,
+    ]);
 
   return (
-    <>
+    <div className="space-y-8">
+
       <Filters
         values={filters}
         onChange={setFilters}
@@ -287,6 +402,7 @@ export default function DashboardClient({
       <PhotoViewer
         photos={filteredPhotos}
       />
-    </>
+
+    </div>
   );
 }
